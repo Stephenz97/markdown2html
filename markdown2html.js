@@ -1,97 +1,94 @@
-function title(text){
-    if(text.indexOf("###### ")==0){
-        text=text.replace("###### ","" );
-        return `<h6>${text}</h6>`;
-    }
-    if(text.indexOf("##### ")==0){
-        text=text.replace("##### ","" );
-        return `<h5>${text}</h5>`;
-    }    
-    if(text.indexOf("#### ")==0){
-        text=text.replace("#### ","" );
-        return `<h4>${text}</h4>`;
-    }
-    if(text.indexOf("### ")==0){
-        text=text.replace("### ","" );
-        return `<h3>${text}</h3>`;
-    }
-    if(text.indexOf("## ")==0){
-        text=text.replace("## ","" );
-        return `<h2>${text}</h2>`;
-    }
-    if(text.indexOf("# ")==0){
-        text=text.replace("# ","" );
-        return `<h1>${text}</h1>`;
-    }
-    return text;
-}
-
-function font(text){
-    text=text.replace(/(.*)(\*\*)(.*)(\*\*)(.*)/g,`$1<strong>$3</strong>$5`);
-    text=text.replace(/(.*)(\*)(.*)(\*)(.*)/g,`$1<em>$3</em>$5`);
-    text=text.replace(/(.*)(\~\~)(.*)(\~\~)(.*)/g,`$1<del>$3</del>$5`);
-    text=text.replace(/(.*)(\=\=)(.*)(\=\=)(.*)/g,`$1<span style="background-color:yellow;">$3</span>$5`);
-    text=text.replace(/(.*)(\~)(.*)(\~)(.*)/g,`$1<sup>$3</sup>$5`);
-    text=text.replace(/(.*)(\^)(.*)(\^)(.*)/g,`$1<sub>$3</sub>$5`);
-    return text;
-}
-
-function picture(text){
-    text=text.replace(/(.*)(\!\[)(.*)(\]\()(.*)(\s\")(.*)(\"\))(.*)/g,`$1<img src="$5" title="$7" alt="$3"/>$9`);
-    text=text.replace(/(.*)(\!\[)(.*)(\]\()(.*)(\s\')(.*)(\'\))(.*)/g,`$1<img src="$5" title="$7" alt="$3"/>$9`);
-    return text;
-}
-
-function link(text){
-    text=text.replace(/(.*)(\[)(.*)(\]\()(.*)(\s\")(.*)(\"\))(.*)/g,`$1<a href="$5" title="$7" target="_blank">$3</a>$9`);
-    text=text.replace(/(.*)(\[)(.*)(\]\()(.*)(\s\')(.*)(\'\))(.*)/g,`$1<a href="$5" title="$7" target="_blank">$3</a>$9`);
-    return text;
-}
-
-function line(text){
-    if((text.replace(/\-/g,0)==0 || text.replace(/\*/g,0)==0) && text.length>2){
-        return "<hr/>";
-    }
-    return text;
-}
-
-function list(text,if_list){
-    if((text.indexOf("- [x] ")==0||text.indexOf("- [ ] ")==0||text.indexOf("+ ")==0||text.indexOf("- ")==0||text.indexOf("* ")==0) && if_list==0){
-        return "1";
-    }
-    
-    if(text.indexOf("- [x] ")==0){
-        return `<input type="checkbox" checked>${text.replace("- [x] ")}</input>`;
-    }
-    if(text.indexOf("- [ ] ")==0){
-        return `<input type="checkbox">${text.replace("- [ ] ")}</input>`;
-    }
-    return text;
-}
-
-function table(text){
-
-}
-
-function pre(text){
-
-}
-
+"use strict";
 function md2blog(md){
     var mdlist=md.split(/\n/g);
     var html="";
-    var if_list=0;
-    //var if_table=false;
-    //var if_pre=false;
-    for (mdi in mdlist){
-        var text=mdlist[mdi];
-        text=line(text);
-        text=font(text);
-        text=picture(text);
-        text=link(text);
-        text=title(text);
-        text=list(text,if_list);
-        html=html+text;
+    var if_code=0;
+    var if_ul=0;
+    for (var mdi in mdlist){
+        var line=mdlist[mdi];
+        {//代码区域
+            if(if_code==1 && line!='```'){html=html+line+`\n`;continue;}
+            if(if_code==1){html=html+`</code></pre>`;if_code=0;continue;}
+            if(line.indexOf("`")==0){
+                if(line.indexOf("```")==0 && if_code==0){
+                    html=html+line.replace(/(\`\`\`)(.*)/g,`<pre class="language-$2"><code>`);if_code=1;continue;
+                }
+                html=html+line.replace(/(\`)(.*)(\`)/g,`<p><code>$2</code></p>`);continue;
+            }
+        }
+        {//行内样式的修改
+            line=line.replace(/(\*\*)(.+)(\*\*)/g,`<strong>$2</strong>`);
+            line=line.replace(/(\*)([^\*]+)(\*)/g,`<em>$2</em>`);
+            line=line.replace(/(\~\~)(.+)(\~\~)/g,`<del>$2</del>`);
+            line=line.replace(/(\=\=)(.+)(\=\=)/g,`<span style="background-color:yellow;">$2</span>`);
+            line=line.replace(/(\~)([^\~]+)(\~)/g,`<sup>$2</sup>`);
+            line=line.replace(/(\^)(.+)(\^)/g,`<sub>$2</sub>`);
+        }
+        {//转换图片和超链接
+            line=line.replace(/(\!\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+[^\=]\"\s*)(.*\S)(\s*\"\s*\))/g,`<img src="$4" title="$6" alt="$2">`);
+            line=line.replace(/(\!\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\=\s*)(\d+)(\s*[xX\*]\s*)(\d+)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<img src="$4" title="$10" alt="$2" width="$6px" height="$8px">`);
+            line=line.replace(/(\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<a href="$4" title="$6" target="_blank">$2</a>`);
+
+        }
+        {//如果是标题，则在转换完成之后换行
+            if(line.indexOf("###### ")==0){html=html+line.replace(/(#{6}\s)(.+)/g,`<h6>$2</h6>`);continue;}
+            if(line.indexOf("##### ")==0){html=html+line.replace(/(#{5}\s)(.+)/g,`<h5>$2</h5>`);continue;}
+            if(line.indexOf("#### ")==0){html=html+line.replace(/(#{4}\s)(.+)/g,`<h4>$2</h4>`);continue;}
+            if(line.indexOf("### ")==0){html=html+line.replace(/(#{3}\s)(.+)/g,`<h3>$2</h3>`);continue;}
+            if(line.indexOf("## ")==0){html=html+line.replace(/(#{2}\s)(.+)/g,`<h2>$2</h2>`);continue;}
+            if(line.indexOf("# ")==0){html=html+line.replace(/(#{1}\s)(.+)/g,`<h1>$2</h1>`);continue;}
+        }
+
+        {//待办列表
+            if(line.indexOf("- [ ] ")==0){html=html+line.replace(/(\-\s\[\s\]\s+)(.+)/g,`<input type="checkbox">$2`);continue;}
+            if(line.indexOf("- [x] ")==0){html=html+line.replace(/(\-\s\[x\]\s+)(.+)/g,`<input type="checkbox" checked>$2`);continue;}
+            if(line.indexOf("- [X] ")==0){html=html+line.replace(/(\-\s\[X\]\s+)(.+)/g,`<input type="checkbox" checked>$2`);continue;}
+        }
+        {//无序列表
+            if(if_ul>0 && (line.indexOf("- ")!=0 || (line.indexOf("- [ ] ")==0 || line.indexOf("- [x] ")==0 || line.indexOf("- [X] ")==0)) && line.indexOf("+ ")!=0 && line.indexOf("* ")!=0){
+                html=html+`</ul>`;if_ul--;
+            }
+            if((line.indexOf("- ")==0 && (line.indexOf("- [ ] ")!=0 && line.indexOf("- [x] ")!=0 && line.indexOf("- [X] ")!=0)) || line.indexOf("+ ")==0 || line.indexOf("* ")==0){
+                if(if_ul==0){html=html+`<ul>`;if_ul++;}
+                html=html+line.replace(/^([\-\+\*]\s)(.+)/g,`<li>$2</li>`);
+                continue;
+            }
+        }
+
+
+        {//转化换行符
+            if((line.replace(/\-/g,"")=="" || line.replace(/\*/g,"")=="") && line.length>2){html=html+"<hr>";continue;}
+        }
+
+
+
+        {//无序列表
+
+            if((line.indexOf("- ")==0 && (line.indexOf("- [ ] ")!=0 && line.indexOf("- [x] ")!=0 && line.indexOf("- [X] ")!=0)) || line.indexOf("+ ")==0 || line.indexOf("* ")==0){
+                if(if_ul==0){html=html+`<ul>`;if_ul++;}
+                html=html+line.replace(/^([\-\+\*]\s)(.+)/g,`<li>$2</li>`);
+                continue;
+            }
+        }
+
+
+
+
+
+        if(line.match(/^\s*[\-\+\*]\s/g)[0].match(/\s/g).length>0){
+            html=html+"f000002";
+            html=html+line.replace(/^(\s*[\-\+\*]\s)(.+)/g,`<li>$2</li>`);
+            continue;
+        }
+
+
+
+
+
+
+
+
+        html=html+line;
     }
     return html;
 }
