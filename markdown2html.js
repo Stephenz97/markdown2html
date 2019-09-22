@@ -1,5 +1,4 @@
 "use strict";
-
 function md2blog(md){
     var mdlist=md.split(/\n/g);
     var html="";
@@ -8,19 +7,16 @@ function md2blog(md){
     var end_list=[];
     var if_table=0;
     var if_bq=0;
-    for (var mdi=0; mdi< mdlist.length;mdi++){
+    for (var mdi=0;mdi<mdlist.length;mdi++){
         var line=mdlist[mdi];
-        {
-            if(line==""){
-                continue;
-            }
+        {//跳过空行
+            if(line==""){continue;}
         }
         {//分割线
             if((line.replace(/\-/g,"")=="" || line.replace(/\*/g,"")=="") && line.length>2){html=html+"<hr>";continue;}
         }
-
         {//代码区域
-            if(if_code==1 && line!='```'){html=html+line+`\n`;continue;}
+            if(if_code==1 && line!='```'){html=html+line.replace(/(\<)([^\>]*)(\>)/g,`&lt;$2&gt;`)+`\n`;continue;}
             if(if_code==1){html=html+`</code></pre>`;if_code=0;continue;}
             if(line.indexOf("`")==0){
                 if(line.indexOf("```")==0 && if_code==0){
@@ -38,11 +34,9 @@ function md2blog(md){
             line=line.replace(/(\^)(.+)(\^)/g,`<sub>$2</sub>`);
         }
         {//转换图片和超链接
-            
             line=line.replace(/(\!\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\=\s*)(\d+)(\s*[xX\*]\s*)(\d+)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<img src="$4" title="$10" alt="$2" width="$6px" height="$8px">`);
             line=line.replace(/(\!\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<img src="$4" title="$6" alt="$2">`);
             line=line.replace(/(\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<a href="$4" title="$6" target="_blank">$2</a>`);
-
         }
         {//如果是标题，则在转换完成之后换行
             if(line.indexOf("###### ")==0){html=html+line.replace(/(#{6}\s)(.+)/g,`<h6>$2</h6>`);continue;}
@@ -52,7 +46,6 @@ function md2blog(md){
             if(line.indexOf("## ")==0){html=html+line.replace(/(#{2}\s)(.+)/g,`<h2>$2</h2>`);continue;}
             if(line.indexOf("# ")==0){html=html+line.replace(/(#{1}\s)(.+)/g,`<h1>$2</h1>`);continue;}
         }
-
         {//待办列表
             if(line.indexOf("- [ ] ")==0){html=html+line.replace(/(\-\s\[\s\]\s+)(.+)/g,`<input type="checkbox">$2<br>`);continue;}
             if(line.indexOf("- [x] ")==0){html=html+line.replace(/(\-\s\[x\]\s+)(.+)/g,`<input type="checkbox" checked>$2<br>`);continue;}
@@ -63,7 +56,8 @@ function md2blog(md){
                 if(line.match(/^\d+\.\s/g)!=null){//有序列表开始
                     if_list++;
                     end_list.unshift(`</ol>`);
-                    html=html+line.replace(/^(\d+\.\s+)(.+)/g,`<ol><li>$2</li>`);
+                    if(line.match(/^\d/g)=="1"){html=html+line.replace(/^(\d+\.\s+)(.+)/g,`<ol><li>$2</li>`);}
+                    else{html=html+line.replace(/^(\d+)(\.\s+)(.+)/g,`<ol start="$1"><li>$3</li>`);}
                     continue;
                 }
                 if(line.match(/^[\-\+\*]\s/g)!=null && line.match(/^\-\s\[[\sxX]\]\s+/g)==null){//无序列表开始
@@ -117,7 +111,6 @@ function md2blog(md){
                 }
             }
         }
-        
         {//表格
             if(if_table==1 && line.match(/(\|)?(([^\|]*)\|)+([^\|]*)(\|)?/g)!=line){//结束表格
                 if_table=0;
@@ -142,7 +135,6 @@ function md2blog(md){
                 continue;
             }
         }
-
         {//引用
             function times(text,time){
                 var longtext='';
