@@ -32,6 +32,7 @@ function md2blog(md){
             line=line.replace(/(\=\=)(.+)(\=\=)/g,`<span style="background-color:yellow;">$2</span>`);
             line=line.replace(/(\~)([^\~]+)(\~)/g,`<sup>$2</sup>`);
             line=line.replace(/(\^)(.+)(\^)/g,`<sub>$2</sub>`);
+            line=line.replace(/(\\\<)([^\>]+)(\>)/g,`&lt;$2&gt;`);
         }
         {//转换图片和超链接
             line=line.replace(/(\!\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\=\s*)(\d+)(\s*[xX\*]\s*)(\d+)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<img src="$4" title="$10" alt="$2" width="$6px" height="$8px">`);
