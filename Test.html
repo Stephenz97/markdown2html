@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test | Markdown2HTML</title>
+    <style>
+        main{
+            position:absolute;
+            width:100vw;
+            height:100vh;
+            top:0;
+            left:0;
+            background-color:#FFF143;
+            display:flex;
+            justify-content:center;
+        }
+        #input,#output{
+            overflow-x:hidden;
+            overflow-y:auto;
+            text-overflow:ellipsis;
+            position:relative;
+            background-color:white;
+            width:500px;
+            margin:30px auto;
+            border:1px solid #4B5CC4;
+        }
+        #input{
+            height:546px;
+            resize:none;
+            font-size:18px;
+        }
+        #output{
+            height:550px;
+        }
+    </style>
+    <script src="md2blog.js"></script>
+</head>
+<body>
+    <script>
+    function exchange(){
+        var mdValue=document.getElementById("input").value;
+        document.getElementById("output").innerHTML=md2blog(mdValue);
+    }
+    </script>
+    <main>
+        <textarea id="input" onkeyup=exchange()></textarea>
+        <article id="output"></article>
+    </main>
+</body>
+
+</html>
