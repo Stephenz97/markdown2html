@@ -38,6 +38,7 @@ function md2blog(md){
             line=line.replace(/(\!\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\=\s*)(\d+)(\s*[xX\*]\s*)(\d+)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<img src="$4" title="$10" alt="$2" width="$6px" height="$8px">`);
             line=line.replace(/(\!\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<img src="$4" title="$6" alt="$2">`);
             line=line.replace(/(\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<a href="$4" title="$6" target="_blank">$2</a>`);
+            line=line.replace(/(\[\s*)([^\]]+\S)(\s*\]\s*\(\s*)([^\)\s]+)(\s*\))/g,`<a href="$4" target="_blank">$2</a>`);
         }
         {//如果是标题，则在转换完成之后换行
             if(line.indexOf("###### ")==0){html=html+line.replace(/(#{6}\s)(.+)/g,`<h6>$2</h6>`);continue;}
