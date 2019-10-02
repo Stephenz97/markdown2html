@@ -1,175 +1,117 @@
 "use strict";
+function times(text,time){//字符串乘法
+    var texts="";
+    for(var i=0;i<time;i++){texts+=text;}
+    return texts; 
+};
+
 function md2blog(md){
-    var mdlist=md.split(/\n/g);
-    var html="";
-    var if_code=0;
-    var if_list=0;
-    var end_list=[];
-    var if_table=0;
-    var if_bq=0;
-    for (var mdi=0;mdi<mdlist.length;mdi++){
-        var line=mdlist[mdi];
-        {//跳过空行
-            if(line==""){continue;}
+    md=`\n`+md+`\n`;
+
+//代码区域
+    md=md.replace(/(\n\`{3})([a-zA-Z]+\n)((.*\n)+?)(\`{3}\n)/g,`\n<pre language="$2"><code>$3</pre></code>`);
+    md=md.replace(/(\n\`{3}\n)((.*\n)+?)(\`{3}\n)/g,`\n<pre><code>$2</pre></code>`); 
+    md=md.replace(/(\n\`)([^\`\n]*)(\`\n)/g,`<pre><code>$2</pre></code>`);
+
+//取出HTML标签
+    var htmlbox=md.match(/(\<)([a-z0-9]+)(\>)([\s\S\n]*?)(\<\/)\2(\>)/g);
+    if(htmlbox){
+        for(var k=0;k<htmlbox.length;k++){
+          md=md.replace(htmlbox[k],`htmlboxreplace${k.toString()}`);
         }
-        {//分割线
-            if((line.replace(/\-/g,"")=="" || line.replace(/\*/g,"")=="") && line.length>2){html=html+"<hr>";continue;}
-        }
-        {//代码区域
-            if(if_code==1 && line!='```'){html=html+line.replace(/(\<)([^\>]*)(\>)/g,`&lt;$2&gt;`)+`\n`;continue;}
-            if(if_code==1){html=html+`</code></pre>`;if_code=0;continue;}
-            if(line.indexOf("`")==0){
-                if(line.indexOf("```")==0 && if_code==0){
-                    html=html+line.replace(/(\`\`\`)(.*)/g,`<pre class="language-$2"><code>`);if_code=1;continue;
-                }
-                html=html+line.replace(/(\`)(.*)(\`)/g,`<p><code>$2</code></p>`);continue;
-            }
-        }
-        {//行内样式的修改
-            line=line.replace(/(\*\*)(.+)(\*\*)/g,`<strong>$2</strong>`);
-            line=line.replace(/(\*)([^\*]+)(\*)/g,`<em>$2</em>`);
-            line=line.replace(/(\~\~)(.+)(\~\~)/g,`<del>$2</del>`);
-            line=line.replace(/(\=\=)(.+)(\=\=)/g,`<span style="background-color:yellow;">$2</span>`);
-            line=line.replace(/(\~)([^\~]+)(\~)/g,`<sup>$2</sup>`);
-            line=line.replace(/(\^)(.+)(\^)/g,`<sub>$2</sub>`);
-            line=line.replace(/(\\\<)([^\>]+)(\>)/g,`&lt;$2&gt;`);
-        }
-        {//转换图片和超链接
-            line=line.replace(/(\!\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\=\s*)(\d+)(\s*[xX\*]\s*)(\d+)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<img src="$4" title="$10" alt="$2" width="$6px" height="$8px">`);
-            line=line.replace(/(\!\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<img src="$4" title="$6" alt="$2">`);
-            line=line.replace(/(\[\s*)(.+\S)(\s*\]\s*\(\s*)(.+\S)(\s+\"\s*)(.*\S)(\s*\"\s*\))/g,`<a href="$4" title="$6" target="_blank">$2</a>`);
-            line=line.replace(/(\[\s*)([^\]]+\S)(\s*\]\s*\(\s*)([^\)\s]+)(\s*\))/g,`<a href="$4" target="_blank">$2</a>`);
-        }
-        {//如果是标题，则在转换完成之后换行
-            if(line.indexOf("###### ")==0){html=html+line.replace(/(#{6}\s)(.+)/g,`<h6>$2</h6>`);continue;}
-            if(line.indexOf("##### ")==0){html=html+line.replace(/(#{5}\s)(.+)/g,`<h5>$2</h5>`);continue;}
-            if(line.indexOf("#### ")==0){html=html+line.replace(/(#{4}\s)(.+)/g,`<h4>$2</h4>`);continue;}
-            if(line.indexOf("### ")==0){html=html+line.replace(/(#{3}\s)(.+)/g,`<h3>$2</h3>`);continue;}
-            if(line.indexOf("## ")==0){html=html+line.replace(/(#{2}\s)(.+)/g,`<h2>$2</h2>`);continue;}
-            if(line.indexOf("# ")==0){html=html+line.replace(/(#{1}\s)(.+)/g,`<h1>$2</h1>`);continue;}
-        }
-        {//待办列表
-            if(line.indexOf("- [ ] ")==0){html=html+line.replace(/(\-\s\[\s\]\s+)(.+)/g,`<input type="checkbox">$2<br>`);continue;}
-            if(line.indexOf("- [x] ")==0){html=html+line.replace(/(\-\s\[x\]\s+)(.+)/g,`<input type="checkbox" checked>$2<br>`);continue;}
-            if(line.indexOf("- [X] ")==0){html=html+line.replace(/(\-\s\[X\]\s+)(.+)/g,`<input type="checkbox" checked>$2<br>`);continue;}
-        }
-        {//列表   
-            if(if_list==0){
-                if(line.match(/^\d+\.\s/g)!=null){//有序列表开始
-                    if_list++;
-                    end_list.unshift(`</ol>`);
-                    if(line.match(/^\d/g)=="1"){html=html+line.replace(/^(\d+\.\s+)(.+)/g,`<ol><li>$2</li>`);}
-                    else{html=html+line.replace(/^(\d+)(\.\s+)(.+)/g,`<ol start="$1"><li>$3</li>`);}
-                    continue;
-                }
-                if(line.match(/^[\-\+\*]\s/g)!=null && line.match(/^\-\s\[[\sxX]\]\s+/g)==null){//无序列表开始
-                    if_list++;
-                    end_list.unshift(`</ul>`);
-                    html=html+line.replace(/^([\-\+\*]\s)(.+)/g,`<ul><li>$2</li>`);
-                    continue;
-                }
-            }
-            if(if_list!=0){
-                if(line.match(/^\s*\d+\.\s/g)!=null){//有序列表继续
-                    if(line.match(/^\s*\d+\.\s/g)[0].match(/\s/g).length==if_list*3-2){//有序列表正常继续
-                        html=html+line.replace(/^(\s*\d+\.\s+)(.+)/g,`<li>$2</li>`);
-                        continue;
-                    }
-                    if(line.match(/^\s*\d+\.\s/g)[0].match(/\s/g).length==if_list*3+1){//嵌套一层有序列表
-                        if_list++;
-                        end_list.unshift(`</ol>`);
-                        html=html+line.replace(/^(\s*\d+\.\s+)(.+)/g,`<ol><li>$2</li>`);
-                        continue;
-                    }
-                    {//嵌套结束
-                        var i=Math.round(if_list-(line.match(/^(\s*\d+\.\s)/g)[0].match(/\s/g).length-1)/3);
-                        for(;i>1;i--){html=html+end_list.shift();if_list--;}
-                        html=html+line.replace(/^(\s*\d+\.\s+)(.+)/g,`<li>$2</li>`);
-                        continue;
-                    }    
-                }
-                if(line.match(/^\s*[\-\+\*]\s/g)!=null){
-                    if(line.match(/^\s*[\-\+\*]\s/g)[0].match(/\s/g).length==if_list*3-2){//无序列表正常继续
-                        html=html+line.replace(/^(^\s*[\-\+\*]\s+)(.+)/g,`<li>$2</li>`);
-                        continue;
-                    }
-                    if(line.match(/^\s*[\-\+\*]\s/g)[0].match(/\s/g).length==if_list*3+1){//嵌套一层无序列表
-                        if_list++;
-                        end_list.unshift(`</ul>`);
-                        html=html+line.replace(/^(\s*[\-\+\*]\s+)(.+)/g,`<ul><li>$2</li>`);
-                        continue;
-                    }
-                    {//嵌套结束
-                        var i=Math.round(if_list-(line.match(/^(\s*\-\s)/g)[0].match(/\s/g).length-1)/3);
-                        for(;i>1;i--){html=html+end_list.shift();if_list--;}
-                        html=html+line.replace(/^(\s*[\-\+\*]\s+)(.+)/g,`<li>$2</li>`);
-                        continue;
-                    }    
-                }
-                if(line.match(/^\s*\d+\.\s/g)==null && line.match(/^\s*\-\s/g)==null){//列表结束
-                    html=html+end_list.join("");
-                    end_list=[];
-                    if_list=0;
-                }
-            }
-        }
-        {//表格
-            if(if_table==1 && line.match(/(\|)?(([^\|]*)\|)+([^\|]*)(\|)?/g)!=line){//结束表格
-                if_table=0;
-                html=html+`</table>`;
-            }
-            if(if_table==0 && line.match(/(\|)?(([^\|]*)\|)+([^\|]*)(\|)?/g)==line){//开始表格
-                if(mdlist[mdi+1] && mdlist[mdi+1].match(/(\|)?(([^\|]*)\|)+([^\|]*)(\|)?/g)==mdlist[mdi+1]){
-                    if(line.match(/^(\|)(([^\|]*)\|)+([^\|]*)(\|)$/g)==line){
-                        line=line.replace(/^(\|)(.*)(\|)$/g,`$2`);
-                    }
-                    if_table=1;
-                    mdi++;
-                    html=html+`<table><tr><th>`+line.replace(/\|/g,`</th><th>`)+`</th></tr>`;
-                    continue;
-                }
-            }
-            if(if_table==1 && line.match(/(\|)?(([^\|]*)\|)+([^\|]*)(\|)?/g)==line){
-                if(line.match(/^(\|)(([^\|]*)\|)+([^\|]*)(\|)$/g)==line){
-                    line=line.replace(/^(\|)(.*)(\|)$/g,`$2`);
-                }
-                html=html+`<tr><td>`+line.replace(/\|/g,`</td><td>`)+`</td></tr>`;
-                continue;
-            }
-        }
-        {//引用
-            function times(text,time){
-                var longtext='';
-                for(var j=0;j<time;j++)
-                {
-                    longtext=longtext+text;
-                }
-                return longtext;
-            }
-            if(if_bq>0 && line.match(/^\>+\s/g)==null){
-                html=html+times('</blockquote>',if_bq);
-                if_bq=0;
-            }
-            if(if_bq==0 && line.match(/^\>+\s/g)!=null){
-                if_bq=line.match(/^\>+/g)[0].match(/\>/g).length;
-                html=html+times('<blockquote>',if_bq)+line.replace(/(^\>+\s)(.*)/g,'<p>$2</p>');
-                continue;
-            }
-            if(if_bq>0 && line.match(/^\>+\s/g)!=null){
-                if(if_bq==line.match(/^\>+/g)[0].match(/\>/g).length){
-                    html=html+line.replace(/(^\>+\s)(.*)/g,'<p>$2</p>');continue;
-                }
-                if(if_bq>line.match(/^\>+/g)[0].match(/\>/g).length){
-                    html=html+times('</blockquote>',if_bq-line.match(/^\>+/g)[0].match(/\>/g).length)+line.replace(/(^\>+\s)(.*)/g,'<p>$2</p>');
-                    if_bq=line.match(/^\>+/g)[0].match(/\>/g).length;continue;
-                }
-                if(if_bq<line.match(/^\>+/g)[0].match(/\>/g).length){
-                    html=html+times('<blockquote>',line.match(/^\>+/g)[0].match(/\>/g).length-if_bq)+line.replace(/(^\>+\s)(.*)/g,'<p>$2</p>');
-                    if_bq=line.match(/^\>+/g)[0].match(/\>/g).length;continue;
-                }
-            }
-        }
-        html=html+`<p>`+line+`</p>`;
     }
-    return html;
+
+//分割线
+    md=md.replace(/\n(\*{3,}|-{3,})\n/g,`\n<hr>\n`);
+
+//行内样式的修改
+    md=md.replace(/(\*\*)(.+)(\*\*)/g,`<strong>$2</strong>`);//加粗
+    md=md.replace(/(\*)([^\*\n]+)(\*)/g,`<em>$2</em>`);//斜体
+    md=md.replace(/(\~\~)(.+)(\~\~)/g,`<del>$2</del>`);//删除线
+    md=md.replace(/(\_\_)(.+)(\_\_)/g,`<u>$2</u>`);//下划线
+    md=md.replace(/(\={3})(.+)(\={3})/g,`<span onmouseover="this.style.background=''" onmouseout="this.style.background='black'" style="background:black;">$2</span>`);//隐藏块
+    md=md.replace(/(\=\=)(.+)(\=\=)/g,`<span style="background:yellow;">$2</span>`);//高亮和自定义高亮颜色
+    md=md.replace(/(\=)([a-z]+|#([\dA-F]{3}|[\dA-F]{6}))(\=)(.+)(\=\=)/g,`<span style="background:$2;">$4</span>`);
+    md=md.replace(/(\~)([^\~\n]+)(\~)/g,`<sup>$2</sup>`);//上下标
+    md=md.replace(/(\^)(.+)(\^)/g,`<sub>$2</sub>`);
+    md=md.replace(/(\\\<)([^\>\n]+)(\>)/g,`&lt;$2&gt;`);//前面加\的HTML标签不转义
+
+//转换图片和超链接
+    md=md.replace(/(\!\s*\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s+\"\s*)(.+)(\s*\"\s*\))/g,`<img src="$4" title="$6" alt="$2">`);
+    md=md.replace(/(\!\s*\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s+\=\s*)(\d+)(\s*[xX\*]\s*)(\d+)(\s*\))/g,`<img src="$4" alt="$2" width="$6px" height="$8px">`);
+    md=md.replace(/(\!\s*\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s+\=\s*)(\d+)(\s*[xX\*]\s*)(\d+)(\s+\"\s*)(.+)(\s*\"\s*\))/g,`<img src="$4" title="$10" alt="$2" width="$6px" height="$8px">`);
+    md=md.replace(/(\!\s*\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s*\))/g,`<img src="$4" alt="$2">`);
+    md=md.replace(/(\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s+\"\s*)(.+)(\s*\"\s*\))/g,`<a href="$4" title="$6" target="_blank">$2</a>`);
+    md=md.replace(/(\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s*\))/g,`<a href="$4" target="_blank">$2</a>`);
+
+//如果是标题，则在转换完成之后换行
+    md=md.replace(/(\n)(#{6}\s+)(.+)\n/g,`\n<h6>$3</h6>`);
+    md=md.replace(/(\n)(#{5}\s+)(.+)\n/g,`\n<h5>$3</h5>`);
+    md=md.replace(/(\n)(#{4}\s+)(.+)\n/g,`\n<h4>$3</h4>`);
+    md=md.replace(/(\n)(#{3}\s+)(.+)\n/g,`\n<h3>$3</h3>`);
+    md=md.replace(/(\n)(#{2}\s+)(.+)\n/g,`\n<h2>$3</h2>`);
+    md=md.replace(/(\n)(#{1}\s+)(.+)\n/g,`\n<h1>$3</h1>`);
+
+//待办列表
+    md=md.replace(/(\n\s*)(-\s\[\s\]\s+)(.+)/g,`\n<input type="checkbox">$3`);
+    md=md.replace(/(\n\s*)(-\s\[x\]\s+)(.+)/g,`\n<input type="checkbox" checked>$3`);
+    md=md.replace(/(\n\s*)(-\s\[X\]\s+)(.+)/g,`\n<input type="checkbox" checked>$3`);
+
+//列表内容
+    for(var i=0;i<10;i++){
+        var spacenum=i*3;
+        var reg1=eval(`/((\\n\\s{${spacenum.toString()}}\\d+\\.\\s+.+)((\\n\\s{${spacenum.toString()},}[-\\+\\*]\\s+.+)|(\\n\\s{${spacenum.toString()},}\\d+\\.\\s+.+))*)/g`);
+        var reg2=eval(`/((\\n\\s{${spacenum.toString()}}[-\\+\\*]\\s+.+)((\\n\\s{${spacenum.toString()},}[-\\+\\*]\\s+.+)|(\\n\\s{${spacenum.toString()},}\\d+\\.\\s+.+))*)/g`);
+        md=md.replace(reg2,`\n<ul>$1\n</ul>`); 
+        md=md.replace(reg1,`\n<ol>$1\n</ol>`);
+    }
+    md=md.replace(/(\n\s*)([-\+\*]\s+)(.+)/g,`<li>$3</li>`);
+    md=md.replace(/(\n\s*)(\d+\.\s+)(.+)/g,`<li>$3</li>`);
+
+//表格
+    var tablebox1=md.match(/(\|([^(\|\n)]+\|)+\n)(\|(-{3,}\|)+)(\n\|([^(\|\n)]+\|)+)+/g);
+    var tablebox2=md.match(/([^(\|\n)]+(\|[^(\|\n)]+)+\n)((-{3,}\|)+-{3,})(\n[^(\|\n)]+(\|[^(\|\n)]+)+)+/g);
+    if(tablebox1){
+        for(var m=0;m<tablebox1.length;m++){
+            var table=tablebox1[m].split(tablebox1[m].match(/\n(\|(-{3,}\|)+)\n/)[0]);
+            var th=`<tr><th>${table[0].replace(/(\|)(.*)(\|)/,`$2`).split(`|`).join(`</th><th>`)}</th></tr>`;
+            var tdbox=table[1].split(`\n`);
+            var td=``;
+            for(var q=0;q<tdbox.length;q++){
+                td=td+`<tr><td>${tdbox[q].replace(/(\|)(.*)(\|)/,`$2`).split(`|`).join(`</td><td>`)}</td></tr>`;
+            }
+            md=md.replace(tablebox1[m],`<table>${th}${td}</table>`)
+        }
+    }
+    if(tablebox2){
+        for(var n=0;n<tablebox2.length;n++){
+            var table=tablebox2[n].split(tablebox2[n].match(/\n(-{3,}\|)+(-{3,})\n/)[0]);
+            var th=`<tr><th>${table[0].split(`|`).join(`</th><th>`)}</th></tr>`;
+            var tdbox=table[1].split(`\n`);
+            var td=``;
+            for(var q=0;q<tdbox.length;q++){
+                td=td+`<tr><td>${tdbox[q].split(`|`).join(`</td><td>`)}</td></tr>`;
+            }
+            md=md.replace(tablebox2[n],`<table>${th}${td}</table>`)
+        }
+    }
+    
+//引用
+    for(var j=10;j>0;j--){
+        var reg3=eval(`/(\\n>{${j.toString()}}\\s*)(.*)/g`);
+        md=md.replace(reg3,`\n${times(`<blockquote>`,j)}$2${times(`</blockquote>`,j)}`);
+        md=md.replace(/\<\/blockquote\>\n\<blockquote\>/g,`\n`);
+    }
+//消除多余\n，并转换为<br>
+    md=md.replace(/\n{3,}/g,`\n\n`);
+    md=md.replace(/\n\n/g,`<br>`);
+
+//复原取出的HTML标签内容
+    if(htmlbox){
+        for(var k=0;k<htmlbox.length;k++){
+          md=md.replace(`htmlboxreplace${k.toString()}`,htmlbox[k]);
+        }
+    }
+
+    return md;
 }
