@@ -42,25 +42,6 @@ function md2blog(md){
     md=md.replace(/(\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s*\))/g,`<a href="$4" target="_blank">$2</a>`);
     md=md.replace(/(\n\s*)(-\s\[\s\]\s+)(.+)/g,`\n<input type="checkbox">$3<br>`);
     md=md.replace(/(\n\s*)(-\s\[[Xx]\]\s+)(.+)/g,`\n<input type="checkbox" checked>$3<br>`);
-    /*for(let i=0;md.match(/\n\s*[-\+\*]\s/g);i=i+3){
-        var reg1=eval(`/(\\n\\s{${i.toString()}})([-\\+\\*]\\s+.*(\\n\\s{${i.toString()}}[^(\\+\\s)].*)*)/g`);
-        md=md.replace(reg1,`$1<li>$2</li>`); 
-    }
-    var lilist=md.match(/<li>([\s\S\n]*)<\/li>/g)
-    for(let i=0;i<lilist.length;i++){
-        md.replace(lilist[i],lilist[i].replacr(/\n\s* /g,'\n').replace(/\n/g,'<br>'));
-    }
-    md=md.replace(/\n([-\+\*]\s*.*)((\n.*)*?)\n\n/g,`\n<ul>\n$1$2\n</ul>\n\n`); 
-    md=md.replace(/\n(\d+\s*\..*)((\n.*)*?)\n\n/g,`\n<ol>\n$1$2\n</ol>\n\n`);
-    for(let i=3;i<31;i=i+3){
-        var reg1=eval(`/\\n\\s{${i.toString()}}\\d+\\.\\s*(.*)((\\n\\s{${i.toString()},}.*)*)/g`);
-        var reg2=eval(`/\\n\\s{${i.toString()}}[-\\+\\*]\\s*(.*)((\\n\\s{${i.toString()},}.*)*)/g`);
-        md=md.replace(reg1,`\n<ol>\n$1$2\n</ol>`);
-        md=md.replace(reg2,`\n<ul>\n$1$2\n</ul>`); 
-    }
-    while((/<\/(ul|ol)>(\n\s*?)*<\1>/).test(md)){
-        md=md.replace(/<\/(ul|ol)>(\n\s*?)*<\1>/g,``);
-    }*/
     if((/(\|([^\|\n]*\|)+\n)(\|(-{3,}\|)+)(\n\|([^\|\n]*\|)+)+/).test(md)){
         let tablebox=md.match(/(\|([^\|\n]*\|)+\n)(\|(-{3,}\|)+)(\n\|([^\|\n]*\|)+)+/g);
         for(let i=0;i<tablebox.length;i++){
