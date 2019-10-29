@@ -1,27 +1,22 @@
 "use strict";
-function times(text,time){
-    let texts="";
-    for(let i=0;i<time;i++){texts+=text;}
-    return texts; 
-};
 function md2blog(md){
     md=`\n${md}\n`;
     md=md.replace(/(\\<)/g,`&lt`);
     md=md.replace(/(\\>)/g,`&gt`);
-    md=md.replace(/(\n```)(javascript|python|java|php|c|c\+\+|c#|swift|r|go)\n((.*\n)+?)(```\n)/gi,`\n<pre language="$2"><code>\n$3</code></pre>\n`);
-    for(let i=0,j=(md.match(/<pre language="[a-zA-Z]/g))?md.match(/<pre language="[a-zA-Z]/g):[];i<j.length;i++){
+    md=md.replace(/(\n```)(javascript|python|java|php|c|c\+\+|c#|swift|r|go)\n((.*\n)+?)(```\n)/gi,`\n<pre class="language-$2"><code>\n$3</code></pre>\n`);
+    for(let i=0,j=(md.match(/<pre\sclass="language-[a-zA-Z]*/g))?md.match(/<pre\sclass="language-[a-zA-Z]*/g):[];i<j.length;i++){
         md=md.replace(j[i],j[i].toLowerCase());
     }
     md=md.replace(/(\n```.*\n)((.*\n)+?)(```\n)/g,`\n<pre><code>\n$2</code></pre>\n`); 
     md=md.replace(/(\n`)([^`\n]+)(`\n)/g,`\n<pre><code>$2</code></pre>`);
     var htmlnum=0;
     var htmlbox=[];
-    while(md.match(/<([a-z0-9]+)[^>]*>[^<]*<\/\1>/g)){
+    while((/<([a-z0-9]+)[^>]*>[^<]*<\/\1>/).test(md)){
         htmlnum++;
         htmlbox[htmlnum]=md.match(/<([a-z0-9]+)[^>]*>[^<]*<\/\1>/g);
         md=md.replace(/<([a-z0-9]+)[^>]*>[^<]*<\/\1>/g,`space${htmlnum.toString()} htmlboxreplace`);
     }
-    if(md.match(/<[a-z0-9]+\s[^<>\n]*>/)){
+    if((/<[a-z0-9]+\s[^<>\n]*>/).test(md)){
         htmlnum++;
         htmlbox[htmlnum]=md.match(/<[a-z0-9]+\s[^<>\n]*>/g);
         md=md.replace(/<[a-z0-9]+\s[^<>\n]*>/g,`space${htmlnum.toString()} htmlboxreplace`);
@@ -46,51 +41,61 @@ function md2blog(md){
     md=md.replace(/(\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s+("|')\s*)(.+)(\s*("|')\s*\))/g,`<a href="$4" title="$6" target="_blank">$2</a>`);
     md=md.replace(/(\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s*\))/g,`<a href="$4" target="_blank">$2</a>`);
     md=md.replace(/(\n\s*)(-\s\[\s\]\s+)(.+)/g,`\n<input type="checkbox">$3<br>`);
-    md=md.replace(/(\n\s*)(-\s\[x\]\s+)(.+)/g,`\n<input type="checkbox" checked>$3<br>`);
-    md=md.replace(/(\n\s*)(-\s\[X\]\s+)(.+)/g,`\n<input type="checkbox" checked>$3<br>`);
-    for(let i=0;i<10;i++){
-        var reg1=eval(`/((\\n\\s{${(i*3).toString()}}\\d+\\.\\s+.+)((\\n\\s{${(i*3).toString()},}[-\\+\\*]\\s+.+)|(\\n\\s{${(i*3).toString()},}\\d+\\.\\s+.+))*)/g`);
-        var reg2=eval(`/((\\n\\s{${(i*3).toString()}}[-\\+\\*]\\s+.+)((\\n\\s{${(i*3).toString()},}[-\\+\\*]\\s+.+)|(\\n\\s{${(i*3).toString()},}\\d+\\.\\s+.+))*)/g`);
-        md=md.replace(reg2,`\n<ul>$1\n</ul>`); 
-        md=md.replace(reg1,`\n<ol>$1\n</ol>`);
+    md=md.replace(/(\n\s*)(-\s\[[Xx]\]\s+)(.+)/g,`\n<input type="checkbox" checked>$3<br>`);
+    /*for(let i=0;md.match(/\n\s*[-\+\*]\s/g);i=i+3){
+        var reg1=eval(`/(\\n\\s{${i.toString()}})([-\\+\\*]\\s+.*(\\n\\s{${i.toString()}}[^(\\+\\s)].*)*)/g`);
+        md=md.replace(reg1,`$1<li>$2</li>`); 
     }
-    md=md.replace(/(\n\s*)([-\+\*]\s+)(.+)/g,`\n<li>$3</li>`);
-    md=md.replace(/(\n\s*)(\d+\.\s+)(.+)/g,`\n<li>$3</li>`);
-    var tablebox1=md.match(/(\|([^\|\n]*\|)+\n)(\|(-{3,}\|)+)(\n\|([^\|\n]*\|)+)+/g);
-    var tablebox2=md.match(/([^\|\n]*(\|[^\|\n]*)+\n)((-{3,}\|)+-{3,})(\n[^\|\n]*(\|[^\|\n]*)+)+/g);
-    if(tablebox1){
-        for(let m=0;m<tablebox1.length;m++){
-            var table=tablebox1[m].split(tablebox1[m].match(/\n(\|(-{3,}\|)+)\n/)[0]);
+    var lilist=md.match(/<li>([\s\S\n]*)<\/li>/g)
+    for(let i=0;i<lilist.length;i++){
+        md.replace(lilist[i],lilist[i].replacr(/\n\s* /g,'\n').replace(/\n/g,'<br>'));
+    }
+    md=md.replace(/\n([-\+\*]\s*.*)((\n.*)*?)\n\n/g,`\n<ul>\n$1$2\n</ul>\n\n`); 
+    md=md.replace(/\n(\d+\s*\..*)((\n.*)*?)\n\n/g,`\n<ol>\n$1$2\n</ol>\n\n`);
+    for(let i=3;i<31;i=i+3){
+        var reg1=eval(`/\\n\\s{${i.toString()}}\\d+\\.\\s*(.*)((\\n\\s{${i.toString()},}.*)*)/g`);
+        var reg2=eval(`/\\n\\s{${i.toString()}}[-\\+\\*]\\s*(.*)((\\n\\s{${i.toString()},}.*)*)/g`);
+        md=md.replace(reg1,`\n<ol>\n$1$2\n</ol>`);
+        md=md.replace(reg2,`\n<ul>\n$1$2\n</ul>`); 
+    }
+    while((/<\/(ul|ol)>(\n\s*?)*<\1>/).test(md)){
+        md=md.replace(/<\/(ul|ol)>(\n\s*?)*<\1>/g,``);
+    }*/
+    if((/(\|([^\|\n]*\|)+\n)(\|(-{3,}\|)+)(\n\|([^\|\n]*\|)+)+/).test(md)){
+        let tablebox=md.match(/(\|([^\|\n]*\|)+\n)(\|(-{3,}\|)+)(\n\|([^\|\n]*\|)+)+/g);
+        for(let i=0;i<tablebox.length;i++){
+            var table=tablebox[i].split(tablebox[i].match(/\n(\|(-{3,}\|)+)\n/)[0]);
             var th=`<tr><th>${table[0].replace(/(\|)(.*)(\|)/,`$2`).split(`|`).join(`</th><th>`)}</th></tr>`;
             var tdbox=table[1].split(`\n`);
             var td=``;
-            for(var q=0;q<tdbox.length;q++){
-                td=td+`<tr><td>${tdbox[q].replace(/(\|)(.*)(\|)/,`$2`).split(`|`).join(`</td><td>`)}</td></tr>`;
+            for(let j=0;j<tdbox.length;j++){
+                td=td+`<tr><td>${tdbox[j].replace(/(\|)(.*)(\|)/,`$2`).split(`|`).join(`</td><td>`)}</td></tr>`;
             }
-            md=md.replace(tablebox1[m],`<table>${th}${td}</table>`)
+            md=md.replace(tablebox[i],`<table>${th}${td}</table>`)
         }
     }
-    if(tablebox2){
-        for(let n=0;n<tablebox2.length;n++){
-            var table=tablebox2[n].split(tablebox2[n].match(/\n(-{3,}\|)+(-{3,})\n/)[0]);
+    if((/([^\|\n]*(\|[^\|\n]*)+\n)((-{3,}\|)+-{3,})(\n[^\|\n]*(\|[^\|\n]*)+)+/).test(md)){
+        let tablebox=md.match(/([^\|\n]*(\|[^\|\n]*)+\n)((-{3,}\|)+-{3,})(\n[^\|\n]*(\|[^\|\n]*)+)+/g);
+        for(let i=0;i<tablebox.length;i++){
+            var table=tablebox[i].split(tablebox[i].match(/\n(-{3,}\|)+(-{3,})\n/)[0]);
             var th=`<tr><th>${table[0].split(`|`).join(`</th><th>`)}</th></tr>`;
             var tdbox=table[1].split(`\n`);
             var td=``;
-            for(var q=0;q<tdbox.length;q++){
-                td=td+`<tr><td>${tdbox[q].split(`|`).join(`</td><td>`)}</td></tr>`;
+            for(let j=0;j<tdbox.length;j++){
+                td=td+`<tr><td>${tdbox[j].split(`|`).join(`</td><td>`)}</td></tr>`;
             }
-            md=md.replace(tablebox2[n],`<table>${th}${td}</table>`)
+            md=md.replace(tablebox[i],`<table>${th}${td}</table>`)
         }
     }
     md=md.replace(/<tr>(<th><\/th>)+<\/tr>/g,"");
-    for(let j=10;j>0;j--){
-        var reg3=eval(`/(\\n>{${j.toString()}}\\s*)(.*)/g`);
-        md=md.replace(reg3,`\n${times(`<blockquote>`,j)}$2${times(`</blockquote>`,j)}`);
-        md=md.replace(/<\/blockquote>\n<blockquote>/g,`\n`);
+    while((/\n>.*/).test(md)){
+        md=md.replace(/(\n>*?>\s*)(.*)/g,`\n<blockquote>\n$2\n</blockquote>`);
+        md=md.replace(/<\/blockquote>\n*<blockquote>/g,`\n`);
     }
     md=md.replace(/(\n\s*){2,}/g,`\n`);
-    md=md.replace(/\n([^<(space\d*\shtmlboxreplace)][^\n]*)/g,`\n<p>$1</p>`);
-    md=md.replace(/\n((<strong|<em|<del|<u|<span|<a)(.*))/g,`\n<p>$1</p>`);
+    md=md.replace(/\n([^<].*)/g,`\n<p>$1</p>`);
+    md=md.replace(/\n((<strong|<em|<del|<u[^l]|<span|<a)(.*))/g,`\n<p>$1</p>`);
+    md=md.replace(/<p>(space\d+\shtmlboxreplace)<\/p>/g,`$1`);
     while(htmlnum){
         for(let i=0;i<htmlbox[htmlnum].length;i++){
             md=md.replace(`space${htmlnum.toString()} htmlboxreplace`,htmlbox[htmlnum][i]);
