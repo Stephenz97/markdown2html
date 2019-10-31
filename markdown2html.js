@@ -30,10 +30,10 @@ function md2blog(md){
     md=md.replace(/(\^)([^\^\n]+)(\^)/g,`<sub>$2</sub>`);
     md=md.replace(/(\n#{6}\s+)(.+)/g,`\n<h6>$2</h6>`);
     md=md.replace(/(\n#{5}\s+)(.+)/g,`\n<h5>$2</h5>`);
-    md=md.replace(/(\n#{4}\s+)(.+)/g,`\n<h4>$2</h4>`);
-    md=md.replace(/(\n#{3}\s+)(.+)/g,`\n<h3>$2</h3>`);
-    md=md.replace(/(\n#{2}\s+)(.+)/g,`\n<h2>$2</h2>`);
-    md=md.replace(/(\n#{1}\s+)(.+)/g,`\n<h1>$2</h1>`);
+    md=md.replace(/(\n####\s+)(.+)/g,`\n<h4>$2</h4>`);
+    md=md.replace(/(\n###\s+)(.+)/g,`\n<h3>$2</h3>`);
+    md=md.replace(/(\n##\s+)(.+)/g,`\n<h2>$2</h2>`);
+    md=md.replace(/(\n#\s+)(.+)/g,`\n<h1>$2</h1>`);
     md=md.replace(/(!\s*\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s+("|')\s*)(.+)(\s*("|')\s*\))/g,`<img src="$4" title="$6" alt="$2">`);
     md=md.replace(/(!\s*\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s+=\s*)(\d+)(\s*[xX\*]\s*)(\d+)(\s*\))/g,`<img src="$4" alt="$2" width="$6px" height="$8px">`);
     md=md.replace(/(!\s*\[\s*)(\S+)(\s*\]\s*\(\s*)(\S+)(\s+=\s*)(\d+)(\s*[xX\*]\s*)(\d+)(\s+("|')\s*)(.+)(\s*("|')\s*\))/g,`<img src="$4" title="$10" alt="$2" width="$6px" height="$8px">`);
