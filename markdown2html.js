@@ -1,8 +1,8 @@
 "use strict";
 function md2blog(md){
     md=`\n${md}\n`;
-    md=md.replace(/(\\<)/g,`&lt`);
-    md=md.replace(/(\\>)/g,`&gt`);
+    md=md.replace(/\\</g,`&lt`);
+    md=md.replace(/\\>/g,`&gt`);
     md=md.replace(/(\n```)(javascript|python|java|php|c|c\+\+|c#|swift|r|go)\n((.*\n)+?)(```\n)/gi,`\n<pre class="language-$2"><code>\n$3</code></pre>\n`);
     for(let i=0,j=(md.match(/<pre\sclass="language-[a-zA-Z]*/g))?md.match(/<pre\sclass="language-[a-zA-Z]*/g):[];i<j.length;i++){
         md=md.replace(j[i],j[i].toLowerCase());
